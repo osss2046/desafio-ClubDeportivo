@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Deportivo Discipline Spa</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>Deportes</h1>
+    <div class="border rounded p-4">
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Nombre</label>
+            <div class="col-sm-10">
+                <input id="nombre" type="text" class="form-control" name="nombre" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Precio</label>
+            <div class="col-sm-10">
+                <input id="precio" type="text" class="form-control" name="precio" />
+            </div>
+        </div>
+        <button class="btn btn-info" onclick="agregar()">Agregar</button>
+    </div>
+    <h5 class="text-center my-4">Tabla de deportes registrados</h5>
+    <table class="table w-100 m-auto border">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Precio</th>
+                <th scope="col">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpo"></tbody>
+    </table>
+</div>
+
+<script>
+$(document).ready(function () {
+    getData();
+});
+
+function getData() {
+    $('#cuerpo').html('');
+    axios.get('/deportes').then(response => {
+        let deportes = response.data.deportes;
+        deportes.forEach((deporte, index) => {
+            $('#cuerpo').append(`
+                <tr>
+                    <th scope="row">${index + 1}</th>
+                    <td>${deporte.nombre}</td>
+                    <td>${deporte.precio}</td>
+                    <td>
+                        <button class="btn btn-warning" onclick="preEdit('${deporte.nombre}', '${deporte.precio}')">Editar</button>
+                        <button class="btn btn-danger" onclick="eliminar('${deporte.nombre}')">Eliminar</button>
+                    </td>
+                </tr>
+            `);
+        });
+    });
+}
+
+function agregar() {
+    let nombre = $('#nombre').val();
+    let precio = $('#precio').val();
+    axios.post('/agregar', { nombre, precio })
+        .then(response => {
+            alert('Deporte agregado exitosamente');
+            getData();
+        })
+        .catch(error => {
+            alert('Error al agregar el deporte: ' + error.message);
+        });
+}
+
+function preEdit(nombre, precio) {
+    $('#nombreModal').val(nombre);
+    $('#precioModal').val(precio);
+    $('#exampleModal').modal('show');
+}
+
+function edit() {
+    let nombre = $('#nombreModal').val();
+    let precio = $('#precioModal').val();
+    axios.post('/editar', { nombre, precio })
+        .then(response => {
+            alert('Deporte actualizado exitosamente');
+            getData();
+            $('#exampleModal').modal('hide');
+        })
+        .catch(error => {
+            alert('Error al actualizar el deporte: ' + error.message);
+        });
+}
+
+function eliminar(nombre) {
+    axios.post('/eliminar', { nombre })
+        .then(response => {
+            alert('Deporte eliminado exitosamente');
+            getData();
+        })
+        .catch(error => {
+            alert('Error al eliminar el deporte: ' + error.message);
+        });
+}
+</script>
+
+<!-- Modal para editar deportes -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Editar Deporte</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Nombre</label>
+                    <div class="col-sm-10">
+                        <input id="nombreModal" type="text" class="form-control" name="nombre" disabled/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Precio</label>
+                    <div class="col-sm-10">
+                        <input id="precioModal" type="text" class="form-control" name="precio" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-warning" onclick="edit()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
